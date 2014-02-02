@@ -15,44 +15,61 @@ $(function() {
     $(window).blur(function(){
         metronome.stop();
     }).focus(function(){
-        metronome.start();
+        if (metronome.status == "play")
+            metronome.start();
+    });
+
+    $("#control-button").click(function() {
+        var el = $(this);
+        if (el.hasClass("disabled"))
+            return;
+
+        metronome.turn();
+        el.find("span")
+            .toggleClass("glyphicon-pause", metronome.status == "play")
+            .toggleClass("glyphicon-play", metronome.status == "pause");
     });
 
     $("#lower-options li a").click(function() {
         var val = parseInt($(this).text());
         $("#lower-parent").text(val);
         metronome.lower = val;
-        metronome.start(true);
+
+        if (metronome.status == "play")
+            metronome.start(true);
     });
 
     $("#upper-options li a").click(function() {
         var val = parseInt($(this).text());
         $("#upper-parent").text(val);
         metronome.upper = val;
-        metronome.start(true);
+
+        if (metronome.status == "play")
+            metronome.start(true);
     });
 
 });
 
 var metronome = {
     init: function(bpm, upper, lower) {
-        this.cnt = 0;
-        this.loaded = 0;
+        this._cnt = 0;
+        this._loaded = 0;
+        this.status = "pause";
 
         this.bpm = bpm;
         this.upper = upper;
         this.lower = lower;
-        this.playing = false;
-        this.initialized = true;
+        this._playing = false;
+        this._initialized = true;
 
-        this.audio1 = soundManager.createSound({
+        this._audio1 = soundManager.createSound({
             multiShot: false,
             url: 'media/beat1.wav',
             autoLoad: true,
             onload: $.proxy(this.load, this)
         });
 
-        this.audio2 = soundManager.createSound({
+        this._audio2 = soundManager.createSound({
             multiShot: false,
             url: 'media/beat2.wav',
             autoLoad: true,
@@ -61,29 +78,42 @@ var metronome = {
     },
 
     load: function() {
-        this.loaded += 1;
-        if (this.loaded == 2) {
+        this._loaded += 1;
+        if (this._loaded == 2) {
+            $("#control-button").removeClass("disabled");
+        }
+    },
+
+    turn: function() {
+        if (this.status == "pause") {
+            this.status = "play";
             this.start();
+        } else {
+            this.status = "pause";
+            this.stop();
         }
     },
 
     _click: function() {
-        if (this.cnt % this.upper == 0) {
-            this.audio1.play();
+        if (this._cnt >= this.upper)
+            this._cnt = 0;
+
+        if (this._cnt == 0) {
+            this._audio1.play();
         } else {
-            this.audio2.play();
+            this._audio2.play();
         }
-        this.cnt += 1;
+        this._cnt += 1;
     },
 
     start: function(force) {
         if (this.playing && !force)
             return;
 
-        if (!this.initialized)
+        if (!this._initialized)
             return;
 
-        this.playing = true;
+        this._playing = true;
         window.clearInterval(this.tick);
 
         var self = this;
@@ -93,10 +123,10 @@ var metronome = {
     },
 
     stop: function() {
-        this.cnt = 0;
-        this.playing = false;
-        this.audio1.stop();
-        this.audio2.stop();
+        this._cnt = 0;
+        this._playing = false;
+        this._audio1.stop();
+        this._audio2.stop();
         window.clearInterval(this.tick);
     }
 }
