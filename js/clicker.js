@@ -30,24 +30,19 @@ $(function() {
             .toggleClass("glyphicon-play", metronome.status == "pause");
     });
 
-    $("#lower-options li a").click(function() {
-        var val = parseInt($(this).text());
-        $("#lower-parent").text(val);
-        metronome.lower = val;
+    $("#lower-options li a, #upper-options li a").click(function(e) {
+        e.preventDefault();
+        var el = $(this),
+            val = parseInt(el.text()),
+            variable = el.closest("ul").attr("id") == "lower-options" ?
+                       "lower" : "upper";
+
+        $("#" + variable + "-parent").text(val);
+        metronome[variable] = val;
 
         if (metronome.status == "play")
             metronome.start(true);
     });
-
-    $("#upper-options li a").click(function() {
-        var val = parseInt($(this).text());
-        $("#upper-parent").text(val);
-        metronome.upper = val;
-
-        if (metronome.status == "play")
-            metronome.start(true);
-    });
-
 });
 
 var metronome = {
